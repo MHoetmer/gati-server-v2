@@ -13,7 +13,9 @@ import (
 func main() {
 
 	router := mux.NewRouter()
+	router.HandleFunc("/api/album/{album}", controllers.GetAlbum).Methods("GET")
 	router.HandleFunc("/api/image/{id}", controllers.GetImage).Methods("GET")
+	router.HandleFunc("/api/upload", controllers.UploadImage).Methods("POST")
 
 	port := os.Getenv("PORT") //Get port from .env file, we did not specify any port so this should return an empty string when tested locally
 	if port == "" {
