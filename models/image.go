@@ -32,7 +32,7 @@ func SaveFilePath(path, album, name, note string) {
 
 	sqlStatement := fmt.Sprintf(`
 INSERT INTO Images (uuid, path, album, name, date, note)
-VALUES (31, '%s', '%s', '%s', %d, '%s' )`, path, album, name, date, note)
+VALUES (2, '%s', '%s', '%s', %d, '%s' )`, path, album, name, date, note)
 	_, err := db.Exec(sqlStatement)
 	if err != nil {
 		panic(err)

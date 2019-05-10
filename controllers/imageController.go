@@ -17,6 +17,7 @@ import (
 func UploadImage(w http.ResponseWriter, r *http.Request) {
 	fmt.Println("File Upload Endpoint Hit")
 	directory := "/Users/mel/Projects/javascript/Gati/src/photos"
+	pDirectory := "/Users/mel/Projects/javascript/Gati/public/photos"
 	// Parse our multipart form, 10 << 20 specifies a maximum
 	// upload of 10 MB files.
 	r.ParseMultipartForm(10 << 20)
@@ -25,6 +26,7 @@ func UploadImage(w http.ResponseWriter, r *http.Request) {
 	// the Header and the size of the file
 	album := r.FormValue("Album")
 	albumDirectory := directory + "/" + album
+	publicDirectory := pDirectory + "/" + album
 	name := r.FormValue("Name")
 	note := r.FormValue("Note")
 
@@ -48,10 +50,12 @@ func UploadImage(w http.ResponseWriter, r *http.Request) {
 	// Create a temporary file within our temp-images directory that follows
 	// a particular naming pattern
 	tempFile, err := ioutil.TempFile(albumDirectory, "*.png")
+	tempFile2, err := ioutil.TempFile(publicDirectory, "*.png")
 	if err != nil {
 		fmt.Println(err)
 	}
 	defer tempFile.Close()
+	defer tempFile2.Close()
 
 	// read all of the contents of our uploaded file into a
 	// byte array
@@ -61,13 +65,22 @@ func UploadImage(w http.ResponseWriter, r *http.Request) {
 	}
 	// write this byte array to our temporary file
 	tempFile.Write(fileBytes)
+	tempFile2.Write(fileBytes)
 	// return that we have successfully uploaded our file!
-	fmt.Fprintf(w, "Successfully Uploaded File\n")
+	fmt.Fprintf(w, "Successfully Uploaded File to %s and %s\n", fmt.Sprintf(albumDirectory+"/"+pngName), fmt.Sprintf(publicDirectory+"/"+pngName))
 
 	oldName := fmt.Sprintf("%s", tempFile.Name())
 	newName := albumDirectory + "/" + pngName
+	oldName2 := fmt.Sprintf("%s", tempFile2.Name())
+	newName2 := publicDirectory + "/" + pngName
 
+	//Rename to get the relative path again for saving to db
 	err = os.Rename(oldName, newName)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	err = os.Rename(oldName2, newName2)
 	if err != nil {
 		log.Fatal(err)
 	}
