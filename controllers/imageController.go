@@ -77,7 +77,14 @@ func UploadImage(w http.ResponseWriter, r *http.Request) {
 
 	models.SaveFilePath(relativePath[1], album, name, note)
 }
+func GetThumbnails(w http.ResponseWriter, r *http.Request) {
+	enableCors(&w)
 
+	data := models.GetThumbnailsHandler()
+	resp := u.Message(true, "success")
+	resp["data"] = data
+	u.Respond(w, resp)
+}
 func GetImage(w http.ResponseWriter, r *http.Request) {
 	enableCors(&w)
 	params := mux.Vars(r)
@@ -98,13 +105,22 @@ func GetImage(w http.ResponseWriter, r *http.Request) {
 func GetAlbum(w http.ResponseWriter, r *http.Request) {
 	enableCors(&w)
 	params := mux.Vars(r)
-	fmt.Println("params", params)
 	album := params["album"]
 
-	data := models.GetAlbum(album)
+	data := models.GetAlbumHandler(album)
 	resp := u.Message(true, "success")
 	resp["data"] = data
 	u.Respond(w, resp)
+}
+
+func GetAlbumNames(w http.ResponseWriter, r *http.Request) {
+	enableCors(&w)
+
+	data := models.GetAlbumNamesHandler()
+	resp := u.Message(true, "success")
+	resp["data"] = data
+	u.Respond(w, resp)
+
 }
 
 func enableCors(w *http.ResponseWriter) {

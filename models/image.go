@@ -3,10 +3,10 @@ package models
 import (
 	"database/sql"
 	"fmt"
-	"log"
+	"strings"
 	"time"
 
-	pq "github.com/lib/pq"
+	_ "github.com/lib/pq"
 )
 
 const (
@@ -33,7 +33,6 @@ func SaveFilePath(path, album, name, note string) {
 	sqlStatement := fmt.Sprintf(`
 INSERT INTO Images (uuid, path, album, name, date, note)
 VALUES (31, '%s', '%s', '%s', %d, '%s' )`, path, album, name, date, note)
-	fmt.Println("sqlStatement", sqlStatement)
 	_, err := db.Exec(sqlStatement)
 	if err != nil {
 		panic(err)
@@ -54,7 +53,6 @@ func GetImageByUuid(uuid int) *ImageResponse {
 	sqlStatement := `
 SELECT uuid, path, album, name, date FROM Images WHERE uuid=$1;`
 	row := db.QueryRow(sqlStatement, uuid)
-	//fmt.Println(row)
 	switch err := row.Scan(&uid, &path, &album, &name, &date); err {
 	case sql.ErrNoRows:
 		fmt.Println("No rows were returned")
@@ -67,20 +65,87 @@ SELECT uuid, path, album, name, date FROM Images WHERE uuid=$1;`
 	return &ImageResponse{}
 }
 
-func GetAlbum(albumName string) (albumResponse []*ImageResponse) {
-
+func GetThumbnailsHandler() []ImageResponse {
+	var albums []string
 	db := getDB()
 	defer db.Close()
 
-	sqlStatement := `
-SELECT uuid, path, album, name, date FROM Images WHERE album=$1;`
-	row := db.QueryRow(sqlStatement, albumName)
-	//fmt.Println(row)
-
-	if err := row.Scan(pq.Array(&albumResponse)); err != nil {
-		log.Fatal(err)
+	sqlAlbumStatement := `
+SELECT DISTINCT album FROM Images;`
+	row, err := db.Query(sqlAlbumStatement)
+	defer row.Close()
+	for row.Next() {
+		var albumName string
+		err = row.Scan(&albumName)
+		if err != nil {
+			panic(err)
+		}
+		albums = append(albums, albumName)
 	}
-	return
+
+	var response []ImageResponse
+	for i := 0; i < len(albums); i++ {
+		sqlStatement := fmt.Sprintf(`SELECT uuid, path, album, name, date FROM Images WHERE album='%s' LIMIT 1`, albums[i])
+
+		var uid int
+		var path string
+		var album string
+		var name string
+		var date int
+
+		row := db.QueryRow(sqlStatement)
+		err = row.Scan(&uid, &path, &album, &name, &date)
+		response = append(response, ImageResponse{uid, path, album, name, date})
+	}
+
+	return response
+}
+
+func GetAlbumNamesHandler() []string {
+	var albums []string
+	db := getDB()
+	defer db.Close()
+
+	sqlAlbumStatement := `
+SELECT DISTINCT album FROM Images;`
+	row, err := db.Query(sqlAlbumStatement)
+	defer row.Close()
+	for row.Next() {
+		var albumName string
+		err = row.Scan(&albumName)
+		if err != nil {
+			panic(err)
+		}
+		albums = append(albums, albumName)
+	}
+
+	return albums
+}
+
+func GetAlbumHandler(albumName string) []ImageResponse {
+
+	db := getDB()
+	defer db.Close()
+	sqlStatement := fmt.Sprintf(`SELECT uuid, path, album, name, date FROM Images WHERE album='%s';`, strings.Title(albumName))
+	row2, err := db.Query(sqlStatement)
+	defer row2.Close()
+
+	var response []ImageResponse
+	for row2.Next() {
+		var uid int
+		var path string
+		var album string
+		var name string
+		var date int
+
+		err = row2.Scan(&uid, &path, &album, &name, &date)
+		if err != nil {
+			panic(err)
+		}
+		response = append(response, ImageResponse{uid, path, album, name, date})
+	}
+	return response
+
 }
 
 func getDB() *sql.DB {
