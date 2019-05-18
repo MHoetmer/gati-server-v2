@@ -13,6 +13,7 @@ import (
 func main() {
 
 	router := mux.NewRouter()
+	router.HandleFunc("/api/allimages", controllers.GetAllImages).Methods("GET")
 	router.HandleFunc("/api/album/{album}", controllers.GetAlbum).Methods("GET")
 	router.HandleFunc("/api/image/{id}", controllers.GetImage).Methods("GET")
 	router.HandleFunc("/api/thumbnails", controllers.GetThumbnails).Methods("GET")

@@ -31,8 +31,8 @@ func SaveFilePath(path, album, name, note string) {
 	date := time.Now().Unix()
 
 	sqlStatement := fmt.Sprintf(`
-INSERT INTO Images (uuid, path, album, name, date, note)
-VALUES (2, '%s', '%s', '%s', %d, '%s' )`, path, album, name, date, note)
+INSERT INTO Images2 (path, album, name, date, note)
+VALUES ( '%s', '%s', '%s', %d, '%s' )`, path, album, name, date, note)
 	_, err := db.Exec(sqlStatement)
 	if err != nil {
 		panic(err)
@@ -51,7 +51,7 @@ func GetImageByUuid(uuid int) *ImageResponse {
 	defer db.Close()
 
 	sqlStatement := `
-SELECT uuid, path, album, name, date FROM Images WHERE uuid=$1;`
+SELECT uid, path, album, name, date FROM Images2 WHERE uid=$1;`
 	row := db.QueryRow(sqlStatement, uuid)
 	switch err := row.Scan(&uid, &path, &album, &name, &date); err {
 	case sql.ErrNoRows:
@@ -71,7 +71,7 @@ func GetThumbnailsHandler() []ImageResponse {
 	defer db.Close()
 
 	sqlAlbumStatement := `
-SELECT DISTINCT album FROM Images;`
+SELECT DISTINCT album FROM Images2;`
 	row, err := db.Query(sqlAlbumStatement)
 	defer row.Close()
 	for row.Next() {
@@ -85,7 +85,7 @@ SELECT DISTINCT album FROM Images;`
 
 	var response []ImageResponse
 	for i := 0; i < len(albums); i++ {
-		sqlStatement := fmt.Sprintf(`SELECT uuid, path, album, name, date FROM Images WHERE album='%s' LIMIT 1`, albums[i])
+		sqlStatement := fmt.Sprintf(`SELECT uid, path, album, name, date FROM Images2 WHERE album='%s' LIMIT 1`, albums[i])
 
 		var uid int
 		var path string
@@ -107,7 +107,7 @@ func GetAlbumNamesHandler() []string {
 	defer db.Close()
 
 	sqlAlbumStatement := `
-SELECT DISTINCT album FROM Images;`
+SELECT DISTINCT album FROM Images2;`
 	row, err := db.Query(sqlAlbumStatement)
 	defer row.Close()
 	for row.Next() {
@@ -123,11 +123,37 @@ SELECT DISTINCT album FROM Images;`
 }
 
 func GetAlbumHandler(albumName string) []ImageResponse {
-
 	db := getDB()
 	defer db.Close()
-	sqlStatement := fmt.Sprintf(`SELECT uuid, path, album, name, date FROM Images WHERE album='%s';`, strings.Title(albumName))
+	sqlStatement := fmt.Sprintf(`SELECT uid, path, album, name, date FROM Images2 WHERE album='%s';`, strings.Title(albumName))
 	row2, err := db.Query(sqlStatement)
+	defer row2.Close()
+
+	var response []ImageResponse
+	for row2.Next() {
+		var uid int
+		var path string
+		var album string
+		var name string
+		var date int
+
+		err = row2.Scan(&uid, &path, &album, &name, &date)
+		if err != nil {
+			panic(err)
+		}
+		response = append(response, ImageResponse{uid, path, album, name, date})
+	}
+	return response
+
+}
+
+func GetAllImagesHandler() []ImageResponse {
+	db := getDB()
+	defer db.Close()
+	sqlStatement := fmt.Sprintf(`SELECT uid, path, album, name, date FROM Images2;`)
+	fmt.Println("allimages", sqlStatement)
+	row2, err := db.Query(sqlStatement)
+	fmt.Println("rows?", row2)
 	defer row2.Close()
 
 	var response []ImageResponse

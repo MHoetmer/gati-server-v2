@@ -89,7 +89,7 @@ func getImage(db *sql.DB, uuid int) Response {
 	var note string
 
 	sqlStatement := `
-SELECT * FROM Images WHERE uuid=$1;`
+SELECT * FROM Images WHERE uid=$1;`
 	row := db.QueryRow(sqlStatement, uuid)
 	//fmt.Println(row)
 	switch err := row.Scan(&uid, &path, &name, &date, &note); err {
@@ -105,7 +105,7 @@ SELECT * FROM Images WHERE uuid=$1;`
 
 func saveImage(db *sql.DB) {
 	sqlStatement := `
-	INSERT INTO images (uuid, path, name, date, note)
+	INSERT INTO images (uid, path, name, date, note)
 	VALUES (10, './gati/photos/georgie/18722458_104334886830863_2699040101157044224_n.jpg', 'Bikers', 1557259719, 'Liever lui dan moe')`
 	_, err := db.Exec(sqlStatement)
 	if err != nil {

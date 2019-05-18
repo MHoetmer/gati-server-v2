@@ -126,6 +126,14 @@ func GetAlbum(w http.ResponseWriter, r *http.Request) {
 	u.Respond(w, resp)
 }
 
+func GetAllImages(w http.ResponseWriter, r *http.Request) {
+	enableCors(&w)
+	data := models.GetAllImagesHandler()
+	resp := u.Message(true, "success")
+	resp["data"] = data
+	u.Respond(w, resp)
+}
+
 func GetAlbumNames(w http.ResponseWriter, r *http.Request) {
 	enableCors(&w)
 
